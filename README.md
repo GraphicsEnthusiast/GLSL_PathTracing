@@ -8,7 +8,7 @@ https://blog.csdn.net/weixin_44176696/category_11195786.html
 https://github.com/RobertBeckebans/OpenGL-PathTracer
 https://github.com/knightcrawler25/GLSL-PathTracer
 
-目前支持纹理材质和常数材质，更多功能正在添加中。推荐使用vcpkg配置环境（我自己64位和32位的都装了），缺glfw，glad，glm。
+未来还会更新，更多功能正在添加中。推荐使用vcpkg配置环境（我自己64位和32位的都装了），缺glfw，glad，glm。
 vcpkg教程：https://blog.csdn.net/cjmqas/article/details/79282847?spm=1001.2014.3001.5506
 建议开vpn，不然容易连接超时。
 
