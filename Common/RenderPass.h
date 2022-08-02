@@ -28,6 +28,6 @@ public:
 public:
 	void BindData(bool finalPass = false);
 	void Draw(std::vector<GLuint> texPassArray = {});
-	static mat4 GetTransformMatrix(vec3 rotateCtrl, vec3 translateCtrl, vec3 scaleCtrl);//模型变换矩阵
+	static mat4 GetTransformMatrix(vec3 translateCtrl, vec3 rotateCtrl, vec3 scaleCtrl);//模型变换矩阵
 	static GLuint GetTextureRGB32F(int width, int height);
 };

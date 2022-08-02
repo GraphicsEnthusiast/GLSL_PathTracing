@@ -9,10 +9,13 @@ uniform int nNodes;
 uniform int width;
 uniform int height;
 uniform int hdrResolution;
+uniform int numOfLights;
 
+uniform samplerBuffer lightsTex;
 uniform samplerBuffer triangles;
 uniform samplerBuffer nodes;
 
+uniform bool useEnv;
 uniform sampler2D lastFrame;
 uniform sampler2D hdrMap;
 uniform sampler2D hdrCache;
@@ -90,6 +93,21 @@ struct HitResult {
 struct SampleResult {
     vec3 direction;
     float pdf;
+};
+
+struct Light { 
+    vec3 position; 
+    vec3 emission; 
+    vec3 u; 
+    vec3 v; 
+    vec3 radiusAreaType; 
+};
+
+struct LightSampleRec { 
+    vec3 surfacePos; 
+    vec3 normal; 
+    vec3 emission; 
+    float pdf; 
 };
 
 //获取第i下标的三角形
@@ -851,71 +869,54 @@ float MisMixWeight(float a, float b) {
     float t = a * a;
     return t / (b * b + t);
 }
-//采样———————————————————————————————————————
 
-//路径追踪
-vec3 PathTracing(HitResult hit, int maxBounce) {
+vec3 UniformSampleSphere(float u1, float u2) {
+	float z = 1.0f - 2.0f * u1;
+	float r = sqrt(max(0.0f, 1.0f - z * z));
+	float phi = 2.0f * PI * u2;
+	float x = r * cos(phi);
+	float y = r * sin(phi);
 
-    vec3 Lo = vec3(0.0f);      //最终的颜色
-    vec3 history = vec3(1.0f); //递归积累的颜色
-
-    for(int bounce = 0; bounce < maxBounce; bounce++) {
-        vec3 V = -hit.viewDir;
-        vec3 N = hit.normal;
-        
-        vec2 uv = SobolVec2(frameCounter+1, bounce);
-        uv = CranleyPattersonRotation(uv);
-        //uv = vec2(rand(), rand());
-
-        vec3 L = SampleHemisphere(uv.x, uv.y);
-        L = ToNormalHemisphere(L, hit.normal);                          //出射方向 wi
-        float pdf = 1.0f / (2.0f * PI);                                   //半球均匀采样概率密度
-        float cosine_o = max(0, dot(V, N));                             //入射光和法线夹角余弦
-        float cosine_i = max(0, dot(L, N));                             //出射光和法线夹角余弦
-        vec3 tangent, bitangent;
-        GetTangent(N, tangent, bitangent);
-        vec3 f_r = BRDF_Evaluate_aniso(V, N, L, tangent, bitangent, hit.material);
-
-        //发射光线
-        Ray randomRay;
-        randomRay.origin = hit.hitPoint;
-        randomRay.direction = L;
-        HitResult newHit = HitBVH(randomRay);
-
-        //未命中
-        if(!newHit.isHit) {
-            vec3 skyColor = HdrColor(randomRay.direction);
-            Lo += history * skyColor * f_r * cosine_i / pdf;
-            break;
-        }
-        
-        //命中光源积累颜色
-        vec3 Le = newHit.material.emissive;
-        Lo += history * Le * f_r * cosine_i / pdf;
-        
-        //递归(步进)
-        hit = newHit;
-        history *= f_r * cosine_i / pdf;  //累积颜色
-    }
-    
-    return Lo;
+	return vec3(x, y, z);
 }
 
-//路径追踪--重要性采样版本
-vec3 PathTracingImportantSampling(HitResult hit, int maxBounce) {
+void SampleSphereLight(in Light light, inout LightSampleRec lightSampleRec) {
+	float r1 = rand();
+	float r2 = rand();
 
-    vec3 Lo = vec3(0.0f);      //最终的颜色
-    vec3 history = vec3(1.0f); //递归积累的颜色
+	lightSampleRec.surfacePos = light.position + UniformSampleSphere(r1, r2) * light.radiusAreaType.x;
+	lightSampleRec.normal = normalize(lightSampleRec.surfacePos - light.position);
+	lightSampleRec.emission = light.emission * numOfLights;
+}
 
-    for(int bounce = 0; bounce < maxBounce; bounce++) {
-        vec3 V = -hit.viewDir;
-        vec3 N = hit.normal;       
+void SampleQuadLight(in Light light, inout LightSampleRec lightSampleRec) {
+	float r1 = rand();
+	float r2 = rand();
 
+	lightSampleRec.surfacePos = light.position + light.u * r1 + light.v * r2;
+	lightSampleRec.normal = normalize(cross(light.u, light.v));
+	lightSampleRec.emission = light.emission * numOfLights;
+}
+
+void SampleLight(in Light light, inout LightSampleRec lightSampleRec) {
+	if (int(light.radiusAreaType.z) == 0) {//Quad Light
+		SampleQuadLight(light, lightSampleRec);
+    }
+	else {
+        SampleSphereLight(light, lightSampleRec);
+    }
+}
+//采样———————————————————————————————————————
+
+void DirectLight(HitResult hit, inout vec3 Lo, in vec3 history) {
+    vec3 V = -hit.viewDir;
+    vec3 N = hit.normal;      
+    if(useEnv) {
         //HDR环境贴图重要性采样    
         Ray hdrTestRay;
         hdrTestRay.origin = hit.hitPoint;
         hdrTestRay.direction = SampleHdr(rand(), rand());
-
+        
         //进行一次求交测试，判断是否有遮挡
         if(dot(N, hdrTestRay.direction) > 0.0f) { //如果采样方向背向点p则放弃测试，因为N dot L < 0            
             HitResult hdrHit = HitBVH(hdrTestRay);
@@ -931,11 +932,68 @@ vec3 PathTracingImportantSampling(HitResult hit, int maxBounce) {
                 
                 //多重重要性采样
                 float mis_weight = MisMixWeight(pdf_light, pdf_brdf);
-                Lo += mis_weight * history * color * f_r * dot(N, L) / pdf_light;
-                //Lo += history * color * f_r * dot(N, L) / pdf_light;  
+                Lo += mis_weight * history * color * f_r * dot(N, L) / pdf_light;  
             }
         }
+    }
+
+    if (numOfLights > 0) {
+		LightSampleRec lightSampleRec;
+		Light light;
+
+		//Pick a light to sample
+		int index = int(rand() * numOfLights);
+
+		//Fetch light Data
+		vec3 p = texelFetch(lightsTex, index * 5 + 0).xyz;
+		vec3 e = texelFetch(lightsTex, index * 5 + 1).xyz;
+		vec3 u = texelFetch(lightsTex, index * 5 + 2).xyz;
+		vec3 v = texelFetch(lightsTex, index * 5 + 3).xyz;
+		vec3 rad = texelFetch(lightsTex, index * 5 + 4).xyz;
+
+		light = Light(p, e, u, v, rad);
+		SampleLight(light, lightSampleRec);
+
+		vec3 lightDir = lightSampleRec.surfacePos - hit.hitPoint;
+		float lightDist = length(lightDir);
+		float lightDistSq = lightDist * lightDist;
+		lightDir /= sqrt(lightDistSq);
+
+		if (dot(lightDir, hit.normal) <= 0.0f || dot(lightDir, lightSampleRec.normal) >= 0.0f) {
+            return;
+        }
+
+		Ray shadowRay;
+        shadowRay.origin = hit.hitPoint;
+        shadowRay.direction = lightDir;
+		HitResult lightHit = HitBVH(shadowRay);
+
+		if (!lightHit.isHit) {
+            vec3 f_r = BRDF_Evaluate(V, N, lightDir, hit.material);
+            float pdf_brdf = BRDF_Pdf(V, N, lightDir, hit.material);
+            float pdf_light = lightDistSq / (light.radiusAreaType.y * abs(dot(lightSampleRec.normal, lightDir)));
+                
+            //多重重要性采样
+            float mis_weight = MisMixWeight(pdf_light, pdf_brdf);
+            Lo += mis_weight * history * light.emission * f_r * dot(N, lightDir) / pdf_light;  	
+		}
+	}
+}
+
+//路径追踪--重要性采样版本
+vec3 PathTracingImportantSampling(HitResult hit, int maxBounce) {
+
+    vec3 Lo = vec3(0.0f);      //最终的颜色
+    vec3 history = vec3(1.0f); //递归积累的颜色
+
+    for(int bounce = 0; bounce < maxBounce; bounce++) {
+        vec3 V = -hit.viewDir;
+        vec3 N = hit.normal;       
+
+        //直接光照
+        DirectLight(hit, Lo, history);
         
+        //间接光照
         //获取3个随机数
         vec2 uv = SobolVec2(frameCounter + 1, bounce);
         uv = CranleyPattersonRotation(uv);
@@ -965,14 +1023,14 @@ vec3 PathTracingImportantSampling(HitResult hit, int maxBounce) {
 
         //未命中        
         if(!newHit.isHit) {
-            vec3 color = HdrColor(L);
-            float pdf_light = HdrPdf(L, hdrResolution);            
-            
-            //多重重要性采样
-            float mis_weight = MisMixWeight(pdf_brdf, pdf_light);   //f(a,b) = a^2 / (a^2 + b^2)
-            Lo += mis_weight * history * color * f_r * NdotL / pdf_brdf;
-            //Lo += history * color * f_r * NdotL / pdf_brdf;
-
+            if(useEnv) {
+                vec3 color = HdrColor(L);
+                float pdf_light = HdrPdf(L, hdrResolution);            
+                
+                //多重重要性采样
+                float mis_weight = MisMixWeight(pdf_brdf, pdf_light);   //f(a,b) = a^2 / (a^2 + b^2)
+                Lo += mis_weight * history * color * f_r * NdotL / pdf_brdf;
+            }
             break;
         }
         
@@ -1002,14 +1060,17 @@ void main() {
     vec3 color;
     
     if(!firstHit.isHit) {
-        //color = vec3(0.0f);
-        color = HdrColor(ray.direction);
+        if(useEnv) {
+            color = HdrColor(ray.direction);
+        }
+        else {
+            color = vec3(0.0f);
+        }
     } 
     else {
-        int maxBounce = 3;
+        int maxBounce = 2;
         vec3 Le = firstHit.material.emissive;
         vec3 Li = PathTracingImportantSampling(firstHit, maxBounce);
-        //vec3 Li = PathTracing(firstHit, maxBounce);
         color = Le + Li;
     }
     

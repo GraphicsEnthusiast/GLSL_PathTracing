@@ -20,6 +20,8 @@ int BVH::BuildBVHwithSAH(int l, int r, int n) {
 	nodes[id].BB = vec3(MIN);
 
 	//计算AABB
+	omp_set_num_threads(32);//线程个数
+#pragma omp parallel for
 	for (int i = l; i <= r; i++) {
 		//最小点AA
 		float minx = std::min(triangles[i].p1.x, std::min(triangles[i].p2.x, triangles[i].p3.x));
@@ -48,6 +50,8 @@ int BVH::BuildBVHwithSAH(int l, int r, int n) {
 	float Cost = INF;
 	int Axis = 0;
 	int Split = (l + r) / 2;
+	omp_set_num_threads(32);//线程个数
+#pragma omp parallel for
 	for (int axis = 0; axis < 3; axis++) {
 		//分别按x，y，z轴排序
 		if (axis == 0) {

@@ -50,7 +50,7 @@ void RenderPass::Draw(std::vector<GLuint> texPassArray) {
 	glUseProgram(0);
 }
 
-mat4 RenderPass::GetTransformMatrix(vec3 rotateCtrl, vec3 translateCtrl, vec3 scaleCtrl) {
+mat4 RenderPass::GetTransformMatrix(vec3 translateCtrl, vec3 rotateCtrl, vec3 scaleCtrl) {
 	mat4 unit(    //µ•Œªæÿ’Û
 		vec4(1.0f, 0.0f, 0.0f, 0.0f),
 		vec4(0.0f, 1.0f, 0.0f, 0.0f),

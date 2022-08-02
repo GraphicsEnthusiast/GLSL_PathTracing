@@ -9,12 +9,21 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <omp.h>
 
 using namespace glm;
 
 const float MAX = FLT_MAX;
 const float MIN = FLT_MIN;
 const float INF = std::numeric_limits<float>::infinity();
+
+struct Light {
+	vec3 position;
+	vec3 emission;
+	vec3 u;
+	vec3 v;
+	vec3 radiusAreaType;
+};
 
 //物体表面材质定义(Disney)
 struct Material {

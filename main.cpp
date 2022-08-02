@@ -18,6 +18,7 @@
 #include "Common/RenderPass.h"
 #include "ThirdParty/HDRLoader.h"
 #include "ThirdParty/stb_image.h"
+#include "OpenImageDenoise/oidn.hpp"
 
 using namespace std;
 using namespace glm;
@@ -343,8 +344,8 @@ void LoadObj(std::string filepath, std::vector<Triangle>& triangles, Material ma
 	}
 }
 
-void InitScene() {
-	std::vector<Triangle> triangles;
+void InitScene_Teaport_EnvLight() {
+	vector<Triangle> triangles;
 
 	Material m;
 	m.roughness = 0.1f;
@@ -353,7 +354,7 @@ void InitScene() {
 	m.clearcoat = 1.0f;
 	m.clearcoatGloss = 0.0f;
 	m.baseColor = vec3(0.2f, 0.85f, 0.9f);
-	LoadObj("Assert/Model/Teaport.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f), vec3(0.0f, -0.4f, 0.0f), vec3(1.75f)), true);
+	LoadObj("Assert/Model/Teaport.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f, -0.4f, 0.0f), vec3(0.0f), vec3(1.75f)), true);
 
 	//m.roughness = 0.2f;
 	//m.specular = 0.8f;
@@ -361,14 +362,17 @@ void InitScene() {
 	//m.clearcoat = 0.6f;
 	//m.clearcoatGloss = 0.4f;
 	//m.baseColor = vec3(0.0f, 0.73f, 0.85f);
-	//LoadObj("Stanford Bunny.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f), vec3(1.4f, -1.5f, 2.0f), vec3(2.5f)), true);
+	//Material m1;
+	//m1.emissive = vec3(2.0f);
+	//LoadObj("Assert/Model/bunny.obj", triangles, m1, RenderPass::GetTransformMatrix(vec3(0.0f), vec3(1.4f, -1.5f, 2.0f), vec3(2.5f)), true);
 
-	m.isTex = 1.0f;
-	m.texid = 0.0f;
-	m.specular = 0.8f;
-	m.clearcoat = 0.0f;
-	m.clearcoatGloss = 0.0f;
-	LoadObj("Assert/Model/quad.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f), vec3(0.0f, -0.5f, 0.0f), vec3(10.0f, 0.01f, 10.0f)), true);
+	Material m1;
+	m1.isTex = 1.0f;
+	m1.texid = 0.0f;
+	m1.specular = 0.8f;
+	m1.clearcoat = 0.0f;
+	m1.clearcoatGloss = 0.0f;
+	LoadObj("Assert/Model/Plane.obj", triangles, m1, RenderPass::GetTransformMatrix(vec3(0.0f, -0.5f, 0.0f), vec3(0.0f), vec3(10.0f, 1.0f, 10.0f)), true);
 
 	std::cout << "模型读取完成：共" << triangles.size() << "个三角形" << std::endl;
 
@@ -444,6 +448,8 @@ void InitScene() {
 	glUniform1i(glGetUniformLocation(pass1.program, "width"), pass1.width);
 	glUniform1i(glGetUniformLocation(pass1.program, "height"), pass1.height);
 	glUniform1i(glGetUniformLocation(pass1.program, "hdrResolution"), hdrResolution);//hdr分辨率
+	glUniform1i(glGetUniformLocation(pass1.program, "useEnv"), true);
+	glUniform1i(glGetUniformLocation(pass1.program, "numOfLights"), 0);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_BUFFER, bvh.trianglesTextureBuffer);
@@ -477,6 +483,182 @@ void InitScene() {
 	glBindTexture(GL_TEXTURE_2D_ARRAY, normal);
 	glUniform1i(glGetUniformLocation(pass1.program, "normalTextures"), 8);
 
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_BUFFER, -1);
+	glUniform1i(glGetUniformLocation(pass1.program, "lightsTex"), 9);
+
+	glUseProgram(0);
+
+	Shader shader2("Shader/vertex.vert", "Shader/lastframe.frag");
+	pass2.program = shader2.ID;
+	pass2.width = Width;
+	pass2.height = Height;
+	lastFrame = RenderPass::GetTextureRGB32F(pass2.width, pass2.height);
+	pass2.colorAttachments.push_back(lastFrame);
+	pass2.BindData();
+
+	Shader shader3("Shader/vertex.vert", "Shader/postprocessing.frag");
+	pass3.program = shader3.ID;
+	pass3.width = Width;
+	pass3.height = Height;
+	pass3.BindData(true);
+}
+
+void InitScene_Teaport_RectLight() {
+	vector<Triangle> triangles;
+
+	Material m;
+	m.roughness = 0.1f;
+	m.specular = 1.0f;
+	m.metallic = 0.1f;
+	m.clearcoat = 1.0f;
+	m.clearcoatGloss = 0.0f;
+	m.baseColor = vec3(0.2f, 0.85f, 0.9f);
+	LoadObj("Assert/Model/Teaport.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f, -0.4f, 0.0f), vec3(0.0f), vec3(1.75f)), true);
+
+	//m.roughness = 0.2f;
+	//m.specular = 0.8f;
+	//m.metallic = 0.7f;
+	//m.clearcoat = 0.6f;
+	//m.clearcoatGloss = 0.4f;
+	//m.baseColor = vec3(0.0f, 0.73f, 0.85f);
+	//Material m1;
+	//m1.emissive = vec3(2.0f);
+	//LoadObj("Assert/Model/bunny.obj", triangles, m1, RenderPass::GetTransformMatrix(vec3(0.0f), vec3(1.4f, -1.5f, 2.0f), vec3(2.5f)), true);
+
+	Material m1;
+	m1.isTex = 1.0f;
+	m1.texid = 0.0f;
+	m1.specular = 0.8f;
+	m1.clearcoat = 0.0f;
+	m1.clearcoatGloss = 0.0f;
+	LoadObj("Assert/Model/Plane.obj", triangles, m1, RenderPass::GetTransformMatrix(vec3(0.0f, -0.5f, 0.0f), vec3(0.0f), vec3(10.0f, 1.0f, 10.0f)), true);
+	
+	vector<Light> lights;
+	Light light;
+	light.emission = vec3(1.0f);
+	light.position = vec3(-2.0f, 2.5f, -2.0f);
+	vec3 v1= vec3(2.0f, 2.5f, -2.0f);
+	vec3 v2 = vec3(-2.0f, 2.5f, 2.0f);
+	light.radiusAreaType.z = 0;
+	light.u = v1 - light.position;
+	light.v = v2 - light.position;
+	light.radiusAreaType.y = length(cross(light.u, light.v));
+	lights.push_back(light);
+
+	Material m2;
+	m2.emissive = light.emission;
+	LoadObj("Assert/Model/Plane.obj", triangles, m2, RenderPass::GetTransformMatrix(vec3(0.0f, light.position.y, 0.0f), vec3(0.0f), vec3(light.position.x, 1.0f, light.position.z)), true);
+
+	GLuint lightsTextureBuffer;
+	GLuint tbo;
+	glGenBuffers(1, &tbo);
+	glBindBuffer(GL_TEXTURE_BUFFER, tbo);
+	glBufferData(GL_TEXTURE_BUFFER, lights.size() * sizeof(light), &lights[0], GL_STATIC_DRAW);
+	glGenTextures(1, &lightsTextureBuffer);
+	glBindTexture(GL_TEXTURE_BUFFER, lightsTextureBuffer);
+	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo);
+
+	std::cout << "模型读取完成：共" << triangles.size() << "个三角形" << std::endl;
+
+	//建立bvh
+	bvh = BVH(triangles);
+
+	//贴图
+	GLuint albedo;
+	GLuint metallic;
+	GLuint roughness;
+	GLuint normal;
+	int x, y, n;
+	unsigned char* albedoTextures = stbi_load("Assert/Texture/metal/albedo.png", &x, &y, &n, 3);
+	unsigned char* metallicTextures = stbi_load("Assert/Texture/metal/metallic.png", &x, &y, &n, 3);
+	unsigned char* roughnessTextures = stbi_load("Assert/Texture/metal/roughness.png", &x, &y, &n, 3);
+	unsigned char* normalTextures = stbi_load("Assert/Texture/metal/normal.png", &x, &y, &n, 3);
+
+	glGenTextures(1, &albedo);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, albedo);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, x, y, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, albedoTextures);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	glGenTextures(1, &metallic);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metallic);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, x, y, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, metallicTextures);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	glGenTextures(1, &roughness);
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, roughness);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, x, y, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, roughnessTextures);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	glGenTextures(1, &normal);
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, normal);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, x, y, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, normalTextures);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	//管线配置
+	Shader shader("Shader/vertex.vert", "Shader/pathtracing.frag");
+	pass1.program = shader.ID;
+	pass1.width = Width;
+	pass1.height = Height;
+	pass1.colorAttachments.push_back(RenderPass::GetTextureRGB32F(pass1.width, pass1.height));
+	pass1.BindData();
+	glUseProgram(pass1.program);
+	glUniform1i(glGetUniformLocation(pass1.program, "nTriangles"), triangles.size());
+	glUniform1i(glGetUniformLocation(pass1.program, "nNodes"), bvh.nodes.size());
+	glUniform1i(glGetUniformLocation(pass1.program, "width"), pass1.width);
+	glUniform1i(glGetUniformLocation(pass1.program, "height"), pass1.height);
+	glUniform1i(glGetUniformLocation(pass1.program, "hdrResolution"), hdrResolution);//hdr分辨率
+	glUniform1i(glGetUniformLocation(pass1.program, "useEnv"), false);
+	glUniform1i(glGetUniformLocation(pass1.program, "numOfLights"), lights.size());
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_BUFFER, bvh.trianglesTextureBuffer);
+	glUniform1i(glGetUniformLocation(pass1.program, "triangles"), 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_BUFFER, bvh.nodesTextureBuffer);
+	glUniform1i(glGetUniformLocation(pass1.program, "nodes"), 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, -1);
+	glUniform1i(glGetUniformLocation(pass1.program, "hdrMap"), 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, -1);
+	glUniform1i(glGetUniformLocation(pass1.program, "hdrCache"), 4);
+
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, albedo);
+	glUniform1i(glGetUniformLocation(pass1.program, "albedoTextures"), 5);
+
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metallic);
+	glUniform1i(glGetUniformLocation(pass1.program, "metallicTextures"), 6);
+
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, roughness);
+	glUniform1i(glGetUniformLocation(pass1.program, "roughnessTextures"), 7);
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, normal);
+	glUniform1i(glGetUniformLocation(pass1.program, "normalTextures"), 8);
+
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_BUFFER, lightsTextureBuffer);
+	glUniform1i(glGetUniformLocation(pass1.program, "lightsTex"), 9);
+
 	glUseProgram(0);
 
 	Shader shader2("Shader/vertex.vert", "Shader/lastframe.frag");
@@ -501,7 +683,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);//OpenGL次版本号为3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);//告诉GLFW我们使用的是核心模式
 
-	GLFWwindow* window = glfwCreateWindow(Width, Height, "GLSL_PathTracing", NULL, NULL);//创建窗口
+	GLFWwindow* window = glfwCreateWindow(Width, Height, "GLSL_PathTracing(OpenImageDenoise)", NULL, NULL);//创建窗口
 	if (window == NULL) {
 		cout << "初始化窗口失败！" << endl;
 		glfwTerminate();
@@ -520,7 +702,8 @@ int main() {
 	glViewport(0, 0, Width, Height);//设置渲染视口的大小
 #pragma endregion
 
-	InitScene();
+	InitScene_Teaport_EnvLight();
+	//InitScene_Teaport_RectLight();
 
 #pragma region 渲染循环
 	while (!glfwWindowShouldClose(window)) {
@@ -549,8 +732,50 @@ int main() {
 		glUniformMatrix4fv(glGetUniformLocation(pass1.program, "cameraRotate"), 1, GL_FALSE, value_ptr(cameraRotate));
 		glUniform1ui(glGetUniformLocation(pass1.program, "frameCounter"), frameCounter);//传计数器用作随机种子
 
-		glActiveTexture(GL_TEXTURE0);
+#pragma region OpenImageDenoise
+		vec3* denoiserInputFramePtr;
+		vec3* frameOutputPtr;
+
+		denoiserInputFramePtr = new vec3[Width * Height];
+		frameOutputPtr = new vec3[Width * Height];
+		unsigned int denoisedTexture;
+
+		glGenTextures(1, &denoisedTexture);
+		glBindTexture(GL_TEXTURE_2D, denoisedTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, Width, Height, 0, GL_RGB, GL_FLOAT, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		glBindTexture(GL_TEXTURE_2D, lastFrame);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
+
+		//Create an Intel Open Image Denoise device
+		oidn::DeviceRef device = oidn::newDevice();
+		device.commit();
+
+		//Create a denoising filter
+		oidn::FilterRef filter = device.newFilter("RT"); //generic ray tracing filter
+		filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, Width, Height);
+		filter.setImage("output", frameOutputPtr, oidn::Format::Float3, Width, Height);
+		filter.set("hdr", false); //image is HDR
+		filter.commit();
+
+		//Filter the image
+		filter.execute();
+
+		//Check for errors
+		const char* errorMessage;
+		if (device.getError(errorMessage) != oidn::Error::None) {
+			std::cout << "Error: " << errorMessage << std::endl;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, denoisedTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, Width, Height, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
+#pragma endregion
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, denoisedTexture);
 		glUniform1i(glGetUniformLocation(pass1.program, "lastFrame"), 0);
 
 		//绘制
@@ -559,6 +784,9 @@ int main() {
 		pass3.Draw(pass2.colorAttachments);
 
 		frameCounter++;
+
+		delete denoiserInputFramePtr;
+		delete frameOutputPtr;
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();//检查有没有触发什么事件（比如键盘输入、鼠标移动等）、更新窗口状态，并调用对应的回调函数（可以通过回调方法手动设置）
