@@ -1,4 +1,15 @@
 # GLSL_PathTracing
+2022 8 3更新：加入了对矩形光源的重要性采样，但是效果图看起来总感觉怪怪的，不知道对不对。。。加入了OpenImageDenoise降噪。
+<img width="1291" alt="rect" src="https://user-images.githubusercontent.com/75780167/182432366-9f9bba75-b29e-4e7a-886b-d5a923249925.png">
+新的百度网盘链接（完整项目）：链接：https://pan.baidu.com/s/1uhLn1RTaIgdOKfTl7NRBkA 
+提取码：6sw4
+注意配置：
+![tt![ttt2](https://user-images.githubusercontent.com/75780167/182434998-9fb077b8-e6ac-4e91-9ba8-0a4bb523fe39.png)
+t1](https://user-images.githubusercontent.com/75780167/182434960-3ecd75a1-8ed2-4e6b-a2bd-b2ce78ef818f.png)
+![ttt3](https://user-images.githubusercontent.com/75780167/182435006-5bf33692-4ddf-491f-a14e-4ff0673ca74b.png)
+
+—————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
 那个兔子模型没有uv，加载时会报错，可以用建模软件（比如maya）为它生成uv后在加载，或者直接修改加载模型的代码，当没有uv时，将uv全部赋值为0。
 
 直接将这些代码创建vs2019工程文件即可，项目太大，git发不上来。
