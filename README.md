@@ -5,7 +5,8 @@
 提取码：6sw4
 注意配置：
 ![tt![ttt2](https://user-images.githubusercontent.com/75780167/182434998-9fb077b8-e6ac-4e91-9ba8-0a4bb523fe39.png)
-t1](https://user-images.githubusercontent.com/75780167/182434960-3ecd75a1-8ed2-4e6b-a2bd-b2ce78ef818f.png)
+![ttt2](https://user-images.githubusercontent.com/75780167/182435357-fbe723aa-b853-4103-b7d8-3ce599710e37.png)
+
 ![ttt3](https://user-images.githubusercontent.com/75780167/182435006-5bf33692-4ddf-491f-a14e-4ff0673ca74b.png)
 
 —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
