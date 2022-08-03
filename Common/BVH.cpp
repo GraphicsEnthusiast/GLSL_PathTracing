@@ -188,7 +188,7 @@ void BVH::TransformTriangleAndBVHNode() {
 		triangles_encoded[i].param2 = vec3(m.specularTint, m.roughness, m.anisotropic);
 		triangles_encoded[i].param3 = vec3(m.sheen, m.sheenTint, m.clearcoat);
 		triangles_encoded[i].param4 = vec3(m.clearcoatGloss, m.IOR, m.transmission);
-		triangles_encoded[i].tex = vec3(m.isTex, m.texid, 0.0f);
+		triangles_encoded[i].tex = vec3(m.isTex, m.texid, m.lightid);
 	}
 
 	//±‡¬ÎBVHNode, aabb

@@ -43,6 +43,7 @@ struct Material {
 	float transmission = 0.0f;
 	float isTex = -1.0f;
 	float texid = 0.0f;
+	float lightid = 0.0f;
 };
 
 struct Triangle {

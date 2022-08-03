@@ -69,6 +69,7 @@ struct Material {
     float clearcoatGloss;
     float IOR;
     float transmission;
+    float lightid;
 };
 
 //光线
@@ -155,6 +156,7 @@ Material GetMaterial(int i) {
     m.clearcoatGloss = param4.x;
     m.IOR = param4.y;
     m.transmission = param4.z;
+    m.lightid = texelFetch(triangles, offset + 15).z;
 
     return m;
 }
@@ -906,6 +908,28 @@ void SampleLight(in Light light, inout LightSampleRec lightSampleRec) {
         SampleSphereLight(light, lightSampleRec);
     }
 }
+
+float Light_Pdf(int index, in LightSampleRec lightSampleRec, HitResult hit) {
+    Light light;
+
+	//Fetch light Data
+	vec3 p = texelFetch(lightsTex, index * 5 + 0).xyz;
+	vec3 e = texelFetch(lightsTex, index * 5 + 1).xyz;
+	vec3 u = texelFetch(lightsTex, index * 5 + 2).xyz;
+	vec3 v = texelFetch(lightsTex, index * 5 + 3).xyz;
+	vec3 rad = texelFetch(lightsTex, index * 5 + 4).xyz;
+
+	light = Light(p, e, u, v, rad);
+
+	vec3 lightDir = lightSampleRec.surfacePos - hit.hitPoint;
+	float lightDist = length(lightDir);
+	float lightDistSq = lightDist * lightDist;
+	lightDir /= sqrt(lightDistSq);
+
+    float pdf_light = lightDistSq / (light.radiusAreaType.y * abs(dot(lightSampleRec.normal, lightDir)));
+
+    return pdf_light;
+}
 //采样———————————————————————————————————————
 
 void DirectLight(HitResult hit, inout vec3 Lo, in vec3 history) {
@@ -939,10 +963,10 @@ void DirectLight(HitResult hit, inout vec3 Lo, in vec3 history) {
 
     if (numOfLights > 0) {
 		LightSampleRec lightSampleRec;
-		Light light;
 
-		//Pick a light to sample
+        //Pick a light to sample
 		int index = int(rand() * numOfLights);
+		Light light;
 
 		//Fetch light Data
 		vec3 p = texelFetch(lightsTex, index * 5 + 0).xyz;
@@ -1035,8 +1059,22 @@ vec3 PathTracingImportantSampling(HitResult hit, int maxBounce) {
         }
         
         //命中光源积累颜色
-        vec3 Le = newHit.material.emissive;
-        Lo += history * Le * f_r * NdotL / pdf_brdf;
+        if(numOfLights > 0) {
+            LightSampleRec lightSampleRec;
+            lightSampleRec.surfacePos = newHit.hitPoint;
+            lightSampleRec.normal = newHit.normal;
+            float pdf_light = Light_Pdf(int(newHit.material.lightid), lightSampleRec, hit);
+            
+            //多重重要性采样
+            float mis_weight = MisMixWeight(pdf_brdf, pdf_light);
+            
+            vec3 Le = newHit.material.emissive;
+            Lo += mis_weight * history * Le * f_r * NdotL / pdf_brdf;
+        }
+        else {
+            vec3 Le = newHit.material.emissive;
+            Lo += history * Le * f_r * NdotL / pdf_brdf;
+        }
 
         //递归(步进)
         hit = newHit;
@@ -1068,7 +1106,7 @@ void main() {
         }
     } 
     else {
-        int maxBounce = 2;
+        int maxBounce = 3;
         vec3 Le = firstHit.material.emissive;
         vec3 Li = PathTracingImportantSampling(firstHit, maxBounce);
         color = Le + Li;
