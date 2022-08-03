@@ -1,0 +1,6 @@
+﻿  BVH.cpp
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\Common\BVH.cpp(13,44): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\Common\BVH.cpp(24,27): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\Common\BVH.cpp(167,31): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\Common\BVH.cpp(190,23): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+  GLSL_PathTracing.vcxproj -> C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\x64\Debug\GLSL_PathTracing.exe
