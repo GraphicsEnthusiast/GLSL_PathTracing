@@ -345,6 +345,10 @@ void LoadObj(std::string filepath, std::vector<Triangle>& triangles, Material ma
 }
 
 void InitScene_Teaport_EnvLight() {
+	camera.upAngle = 30.0f;
+	camera.rotatAngle = 90.0f;
+	camera.r = 6.0f;
+
 	vector<Triangle> triangles;
 
 	Material m;
@@ -355,6 +359,7 @@ void InitScene_Teaport_EnvLight() {
 	m.clearcoatGloss = 0.0f;
 	m.baseColor = vec3(0.2f, 0.85f, 0.9f);
 	LoadObj("Assert/Model/Teaport.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f, -0.4f, 0.0f), vec3(0.0f), vec3(1.75f)), true);
+	//LoadObj("Assert/Model/ajax.obj", triangles, m, RenderPass::GetTransformMatrix(vec3(0.0f, -0.4f, 0.0f), vec3(0.0f), vec3(1.75f)), true);
 
 	//m.roughness = 0.2f;
 	//m.specular = 0.8f;
@@ -505,6 +510,10 @@ void InitScene_Teaport_EnvLight() {
 }
 
 void InitScene_Teaport_RectLight() {
+	camera.upAngle = 30.0f;
+	camera.rotatAngle = 90.0f;
+	camera.r = 6.0f;
+
 	vector<Triangle> triangles;
 
 	Material m;
