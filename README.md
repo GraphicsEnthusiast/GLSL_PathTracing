@@ -1,4 +1,6 @@
 # GLSL_PathTracing
+2022 8 6更新，同时使用HDR环境光和矩形光原会白屏。
+
 2022 8 3更新：加入了对矩形光源的重要性采样，但是效果图看起来总感觉怪怪的，不知道对不对。。。加入了OpenImageDenoise降噪。
 <img width="1291" alt="rect" src="https://user-images.githubusercontent.com/75780167/182432366-9f9bba75-b29e-4e7a-886b-d5a923249925.png">
 新的百度网盘链接（完整项目）：链接：https://pan.baidu.com/s/1uhLn1RTaIgdOKfTl7NRBkA 
