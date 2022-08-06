@@ -62,14 +62,14 @@ C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(61,49): warnin
 C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(187,10): warning C4244: “初始化”: 从“__int64”转换到“int”，可能丢失数据
 C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(189,10): warning C4244: “初始化”: 从“__int64”转换到“int”，可能丢失数据
 C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(319,31): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(446,81): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
-C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(447,77): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
-C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(618,81): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
-C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(619,77): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
-C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(624,79): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(451,81): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(452,77): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(627,81): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(628,77): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
+C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\main.cpp(633,79): warning C4267: “参数”: 从“size_t”转换到“GLint”，可能丢失数据
   正在生成代码
-  164 of 1068 functions (15.4%) were compiled, the rest were copied from previous compilation.
-    3 functions were new in current compilation
-    19 functions had inline decision re-evaluated but remain unchanged
+  2 of 1068 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    21 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   GLSL_PathTracing.vcxproj -> C:\Users\17199\Desktop\GLSL_PathTracing\GLSL_PathTracing\x64\Release\GLSL_PathTracing.exe
